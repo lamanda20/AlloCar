@@ -1,0 +1,7 @@
+{
+  "name": "Cardnd Clone - Car Rental Morocco",
+  "description": "A high-end car rental platform clone featuring city-based search, advanced filtering, detailed car profiles, and a streamlined booking process with Supabase integration.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
