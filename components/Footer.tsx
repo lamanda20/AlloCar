@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Phone, Mail, Send, Facebook, Instagram, Twitter, MessageSquare } from 'lucide-react';
+import { Phone, Mail, Send, Facebook, Instagram, MessageSquare } from 'lucide-react';
 import { useLanguage } from '../App';
 
 const Footer: React.FC = () => {
@@ -72,8 +72,8 @@ const Footer: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-10">
-            <div className="flex items-center gap-6 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all">
+        <div className="flex items-center gap-8">
+            <div className="flex items-center gap-6">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-4" />
                 <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6" />
                 <div className="h-4 w-px bg-gray-200"></div>
@@ -83,10 +83,13 @@ const Footer: React.FC = () => {
                 </div>
                 <span className="text-[10px] font-black text-gray-900 uppercase tracking-tighter">MAD</span>
             </div>
-            <div className="flex items-center gap-6 text-gray-400">
-                <Facebook className="w-5 h-5 hover:text-[#2A4E2F] cursor-pointer transition-colors" />
-                <Instagram className="w-5 h-5 hover:text-[#2A4E2F] cursor-pointer transition-colors" />
-                <Twitter className="w-5 h-5 hover:text-[#2A4E2F] cursor-pointer transition-colors" />
+            <div className="flex items-center gap-6">
+                <a href="#" className="transition-transform hover:scale-110">
+                  <Facebook className="w-5 h-5 text-[#1877F2] fill-[#1877F2] stroke-none" />
+                </a>
+                <a href="#" className="transition-transform hover:scale-110">
+                  <Instagram className="w-5 h-5 text-[#E4405F]" />
+                </a>
             </div>
         </div>
       </div>
@@ -94,7 +97,6 @@ const Footer: React.FC = () => {
   );
 };
 
-// Fixed duplicate x1 attribute: changed the second x1 to y1
 const GlobeIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10" />

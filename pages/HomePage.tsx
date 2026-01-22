@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import SearchBar from '../components/SearchBar';
 import CarCard from '../components/CarCard';
 import { CATEGORIES } from '../constants';
-import { SearchState, Car } from '../types';
+import { SearchState, Car, Transmission, FuelType } from '../types';
 import { ChevronRight, ChevronLeft, ChevronDown, Loader2, Database, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useLanguage } from '../App';
@@ -49,7 +49,7 @@ const HomePage: React.FC = () => {
     if (filterCategory && car.category !== filterCategory) return false;
 
     const cityParam = searchParams.get('city');
-    if (cityParam && cityParam !== 'Toutes les villes' && cityParam !== 'All Cities' && !car.city.toLowerCase().includes(cityParam.toLowerCase())) return false;
+    if (cityParam && cityParam !== 'Toutes les villes' && !car.city.toLowerCase().includes(cityParam.toLowerCase())) return false;
 
     const transParam = searchParams.get('transmission');
     if (transParam && car.transmission !== transParam) return false;
@@ -102,8 +102,8 @@ const HomePage: React.FC = () => {
                   options: {
                     freeDelivery: false,
                     seats: searchParams.get('seats') ? parseInt(searchParams.get('seats')!) : null,
-                    transmission: searchParams.get('transmission') as any || null,
-                    fuel: searchParams.get('fuel') as any || null,
+                    transmission: searchParams.get('transmission') as Transmission || null,
+                    fuel: searchParams.get('fuel') as FuelType || null,
                   }
                 }} />
             </div>

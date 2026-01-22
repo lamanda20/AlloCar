@@ -26,7 +26,7 @@ const PartnerPage: React.FC = () => {
       <section className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row items-center gap-16">
         <div className="flex-1 space-y-12">
           <h1 className="text-6xl md:text-8xl font-black text-[#2A4E2F] leading-tight">
-            Il est facile de<br/>commencer sur Cardnd
+            Il est facile de<br/>commencer sur AlloCar
           </h1>
         </div>
 
