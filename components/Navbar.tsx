@@ -1,8 +1,15 @@
 
 import React from 'react';
 import { Globe, Menu } from 'lucide-react';
+import { useLanguage } from '../App';
 
 const Navbar: React.FC = () => {
+  const { lang, setLang, t } = useLanguage();
+
+  const toggleLanguage = () => {
+    setLang(lang === 'fr' ? 'en' : 'fr');
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-[100] px-6 py-4 flex items-center justify-between border-b border-gray-100">
       <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.location.hash = '#/'}>
@@ -12,7 +19,7 @@ const Navbar: React.FC = () => {
                 <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
             </div>
         </div>
-        <span className="text-xl font-bold tracking-tight text-gray-900">Cardnd</span>
+        <span className="text-xl font-bold tracking-tight text-gray-900">{t.brand}</span>
       </div>
 
       <div className="flex items-center gap-4">
@@ -20,11 +27,15 @@ const Navbar: React.FC = () => {
           onClick={() => window.location.hash = '#/partner'}
           className="hidden md:block text-sm font-bold text-gray-800 hover:text-[#2A4E2F] transition-colors"
         >
-          Devenir Partenaire
+          {t.partner}
         </button>
         <div className="flex items-center gap-2">
-            <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-700">
+            <button 
+              onClick={toggleLanguage}
+              className="flex items-center gap-2 p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-700"
+            >
               <Globe className="w-5 h-5" />
+              <span className="text-xs font-black uppercase">{lang}</span>
             </button>
             <button className="flex items-center gap-2 p-1.5 pl-3 bg-white hover:shadow-md border border-gray-200 rounded-full transition-all text-gray-700">
               <Menu className="w-5 h-5" />

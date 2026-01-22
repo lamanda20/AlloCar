@@ -1,6 +1,6 @@
 
 -- TABLE: cars
-CREATE TABLE cars (
+CREATE TABLE IF NOT EXISTS cars (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   brand TEXT NOT NULL,
   model TEXT NOT NULL,
@@ -17,11 +17,13 @@ CREATE TABLE cars (
   rating DECIMAL DEFAULT 5.0,
   reviews_count INTEGER DEFAULT 0,
   is_verified_partner BOOLEAN DEFAULT true,
+  cancel_policy TEXT, -- Colonne pour la politique d'annulation personnalisée
+  agency_rules TEXT,  -- Colonne pour les règles spécifiques de l'agence
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- TABLE: reservations
-CREATE TABLE reservations (
+CREATE TABLE IF NOT EXISTS reservations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   car_id UUID REFERENCES cars(id),
   user_id UUID REFERENCES auth.users(id),
@@ -40,8 +42,6 @@ CREATE TABLE reservations (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- RLS POLICIES (Example)
+-- RLS POLICIES
 ALTER TABLE cars ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public read access for cars" ON cars FOR SELECT USING (true);
-
--- Storage bucket 'car-images' should be created manually for car photos.

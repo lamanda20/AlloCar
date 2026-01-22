@@ -23,6 +23,8 @@ export interface Car {
   location_lat?: number;
   location_lng?: number;
   is_verified_partner: boolean;
+  cancel_policy?: string; // Nouveau champ
+  agency_rules?: string;  // Nouveau champ
 }
 
 export interface SearchState {

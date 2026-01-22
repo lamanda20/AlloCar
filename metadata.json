@@ -1,6 +1,6 @@
 {
-  "name": "Cardnd Clone - Car Rental Morocco",
-  "description": "A high-end car rental platform clone featuring city-based search, advanced filtering, detailed car profiles, and a streamlined booking process with Supabase integration.",
+  "name": "AlloCar - Location de Voitures au Maroc",
+  "description": "Plateforme haut de gamme de location de voitures au Maroc. Recherche par ville, filtres avancés et réservation simplifiée avec Supabase.",
   "requestFramePermissions": [
     "geolocation"
   ]

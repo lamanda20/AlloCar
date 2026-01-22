@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Building, Plane, Landmark, ChevronLeft, ChevronRight, CheckSquare, Square } from 'lucide-react';
+import { Search, Building, Plane, Landmark, ChevronLeft, ChevronRight, CheckSquare, Square, Globe } from 'lucide-react';
 import { CITIES, TIMES } from '../constants';
 import { SearchState, Transmission, FuelType } from '../types';
 
@@ -95,9 +95,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
   };
 
   const handleSearchClick = () => {
-    // On construit l'URL avec tous les paramètres
     const params = new URLSearchParams();
-    if (search.location) params.set('city', search.location);
+    // Si "Toutes les villes" ou vide, on n'ajoute pas le paramètre city
+    if (search.location && search.location !== 'Toutes les villes') params.set('city', search.location);
     if (search.options.transmission) params.set('transmission', search.options.transmission);
     if (search.options.fuel) params.set('fuel', search.options.fuel);
     if (search.options.seats) params.set('seats', search.options.seats.toString());
@@ -122,20 +122,27 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
       >
         {activeTab === 'location' && (
           <div className="p-6 w-[450px]">
-            <h4 className="text-gray-400 text-[11px] font-black uppercase tracking-widest mb-6 px-4">Destinations suggérées</h4>
+            <h4 className="text-gray-400 text-[11px] font-black uppercase tracking-widest mb-6 px-4">Où souhaitez-vous aller ?</h4>
             <div className="max-h-[380px] overflow-y-auto custom-scrollbar px-2 space-y-1">
               {CITIES.map((city) => (
                 <button
                   key={city.name}
-                  onClick={() => { setSearch(s => ({ ...s, location: city.name })); setActiveTab('date'); }}
+                  onClick={() => { 
+                    setSearch(s => ({ ...s, location: city.name })); 
+                    setActiveTab('date'); 
+                  }}
                   className={`w-full flex items-center gap-4 p-4 rounded-[1.5rem] transition-all text-left group ${search.location === city.name ? 'bg-[#f5f5f5]' : 'hover:bg-[#f8f8f8]'}`}
                 >
                   <div className={`w-14 h-14 rounded-[1.3rem] flex items-center justify-center shrink-0 ${
                     city.icon === 'plane' ? 'bg-[#1D2B44]' : 
                     city.icon === 'building' ? 'bg-[#4B829F]' : 
-                    city.icon === 'landmark' ? 'bg-[#A86E3A]' : 'bg-[#2A4E2F]'
+                    city.icon === 'landmark' ? 'bg-[#A86E3A]' : 
+                    city.icon === 'globe' ? 'bg-black' : 'bg-[#2A4E2F]'
                   } text-white shadow-sm transition-transform group-hover:scale-105`}>
-                    {city.icon === 'plane' ? <Plane className="w-7 h-7" /> : city.icon === 'building' ? <Building className="w-7 h-7" /> : <Landmark className="w-7 h-7" />}
+                    {city.icon === 'plane' ? <Plane className="w-7 h-7" /> : 
+                     city.icon === 'building' ? <Building className="w-7 h-7" /> : 
+                     city.icon === 'globe' ? <Globe className="w-7 h-7" /> : 
+                     <Landmark className="w-7 h-7" />}
                   </div>
                   <div className="flex-1">
                     <div className="font-black text-gray-900 text-[15px]">{city.name}</div>
@@ -159,7 +166,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
             </div>
             
             <div className="flex gap-16 px-4">
-               {/* January Calendar */}
                <div className="grid grid-cols-7 gap-y-2 text-center">
                   {['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM'].map(d => <div key={d} className="text-[11px] font-black text-gray-400 mb-4">{d}</div>)}
                   {Array.from({length: 31}, (_, i) => i + 1).map(d => {
@@ -167,7 +173,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
                     const isStart = selection.start?.day === d && selection.start?.month === 0;
                     const isEnd = selection.end?.day === d && selection.end?.month === 0;
                     const range = isInRange(d, 0, 2026);
-                    
                     return (
                       <div 
                         key={d} 
@@ -184,7 +189,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
                     );
                   })}
                </div>
-               {/* February Calendar */}
                <div className="grid grid-cols-7 gap-y-2 text-center">
                   {['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM'].map(d => <div key={d} className="text-[11px] font-black text-gray-400 mb-4">{d}</div>)}
                   {Array.from({length: 28}, (_, i) => i + 1).map(d => {
@@ -192,7 +196,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
                     const isStart = selection.start?.day === d && selection.start?.month === 1;
                     const isEnd = selection.end?.day === d && selection.end?.month === 1;
                     const range = isInRange(d, 1, 2026);
-                    
                     return (
                       <div 
                         key={d} 
@@ -210,7 +213,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
                   })}
                </div>
             </div>
-            
             <div className="mt-12 flex justify-end px-4">
                <button onClick={() => setActiveTab('time-start')} className="bg-black text-white px-12 py-3.5 rounded-2xl font-black text-sm hover:bg-gray-900 transition-all active:scale-95 shadow-xl shadow-black/10 uppercase tracking-widest">
                   Suivant
@@ -258,7 +260,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
                     </button>
                 </div>
             </div>
-
             <div className="space-y-5">
                 <h5 className="text-[15px] font-black text-gray-900">Sièges</h5>
                 <div className="flex gap-3">
@@ -275,7 +276,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
                     ))}
                 </div>
             </div>
-
             <div className="space-y-5">
                 <h5 className="text-[15px] font-black text-gray-900">Boîte</h5>
                 <div className="flex gap-4">
@@ -295,7 +295,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
                     })}
                 </div>
             </div>
-
             <div className="space-y-5">
                 <h5 className="text-[15px] font-black text-gray-900">Carburant</h5>
                 <div className="flex flex-wrap gap-4">
@@ -312,7 +311,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
                     ))}
                 </div>
             </div>
-
             <div className="pt-6 border-t border-gray-100">
                 <button 
                     onClick={() => setSearch(s => ({...s, options: {freeDelivery: false, seats: null, transmission: null, fuel: null}}))}
@@ -330,20 +328,16 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
   return (
     <div className="relative max-w-[1000px] mx-auto w-full">
       <div className="bg-white rounded-full shadow-[0_15px_50px_rgba(0,0,0,0.12)] flex items-center p-2.5 border border-gray-100 h-[88px] relative z-[200]">
-        {/* Lieu */}
         <button 
           onClick={() => setActiveTab('location')}
           className={`flex-[1.2] flex flex-col items-start px-9 py-2 rounded-full transition-all text-left group ${activeTab === 'location' ? 'bg-[#f0f0f0]' : 'hover:bg-gray-50'}`}
         >
           <span className="text-[10px] font-black text-gray-900 uppercase tracking-tighter mb-1">Lieu</span>
           <span className={`text-[13px] truncate w-full font-bold ${search.location ? 'text-black' : 'text-gray-400'}`}>
-            {search.location || 'Chercher une destination'}
+            {search.location || 'Toutes les villes'}
           </span>
         </button>
-
         <div className="w-[1.5px] h-10 bg-gray-100 mx-1"></div>
-
-        {/* Date */}
         <button 
           onClick={() => setActiveTab('date')}
           className={`flex-[1.5] flex flex-col items-start px-9 py-2 rounded-full transition-all text-left ${activeTab === 'date' ? 'bg-[#f0f0f0]' : 'hover:bg-gray-50'}`}
@@ -353,10 +347,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
             {search.startDate ? `${search.startDate} - ${search.endDate}` : 'Ajouter une date'}
           </span>
         </button>
-
         <div className="w-[1.5px] h-10 bg-gray-100 mx-1"></div>
-
-        {/* Heure Départ */}
         <button 
           onClick={() => setActiveTab('time-start')}
           className={`flex-1 flex flex-col items-start px-7 py-2 rounded-full transition-all text-left ${activeTab === 'time-start' ? 'bg-[#f0f0f0]' : 'hover:bg-gray-50'}`}
@@ -366,10 +357,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
             {search.startTime}
           </span>
         </button>
-
         <div className="w-[1.5px] h-10 bg-gray-100 mx-1"></div>
-
-        {/* Heure Retour */}
         <button 
           onClick={() => setActiveTab('time-end')}
           className={`flex-1 flex flex-col items-start px-7 py-2 rounded-full transition-all text-left ${activeTab === 'time-end' ? 'bg-[#f0f0f0]' : 'hover:bg-gray-50'}`}
@@ -379,10 +367,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
             {search.endTime}
           </span>
         </button>
-
         <div className="w-[1.5px] h-10 bg-gray-100 mx-1"></div>
-
-        {/* Options */}
         <button 
           onClick={() => setActiveTab('options')}
           className={`flex-1 flex flex-col items-start px-7 py-2 rounded-full transition-all text-left ${activeTab === 'options' ? 'bg-[#f0f0f0]' : 'hover:bg-gray-50'}`}
@@ -390,8 +375,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
           <span className="text-[10px] font-black text-gray-900 uppercase tracking-tighter mb-1">Options</span>
           <span className="text-[13px] font-bold text-gray-400">Filtrer</span>
         </button>
-
-        {/* Action Button */}
         <button 
           onClick={handleSearchClick}
           className="bg-black text-white w-[68px] h-[68px] rounded-full flex items-center justify-center hover:bg-gray-800 transition-all active:scale-95 ml-2 shrink-0 shadow-2xl shadow-black/30 group"
@@ -399,7 +382,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialState }) => {
           <Search className="w-7 h-7 stroke-[3.5px] group-hover:scale-110 transition-transform" />
         </button>
       </div>
-
       {renderPopover()}
     </div>
   );
