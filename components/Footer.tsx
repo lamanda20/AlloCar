@@ -68,7 +68,7 @@ const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto pt-10 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-10">
         <div className="flex flex-col items-center md:items-start gap-1">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-            © 2025 ALLOCAR Tous droits réservés. Réalisé par <span className="text-black">ZAKARIA</span>.
+            © 2025 ALLOCAR {t.footerRights}
           </p>
         </div>
 
@@ -94,6 +94,7 @@ const Footer: React.FC = () => {
   );
 };
 
+// Fixed duplicate x1 attribute: changed the second x1 to y1
 const GlobeIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10" />

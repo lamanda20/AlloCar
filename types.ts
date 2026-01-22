@@ -25,6 +25,8 @@ export interface Car {
   is_verified_partner: boolean;
   cancel_policy?: string; // Nouveau champ
   agency_rules?: string;  // Nouveau champ
+  // added to fix property not existing error
+  created_at?: string;
 }
 
 export interface SearchState {

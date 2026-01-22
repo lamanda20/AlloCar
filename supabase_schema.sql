@@ -17,8 +17,10 @@ CREATE TABLE IF NOT EXISTS cars (
   rating DECIMAL DEFAULT 5.0,
   reviews_count INTEGER DEFAULT 0,
   is_verified_partner BOOLEAN DEFAULT true,
-  cancel_policy TEXT, -- Colonne pour la politique d'annulation personnalisée
-  agency_rules TEXT,  -- Colonne pour les règles spécifiques de l'agence
+  cancel_policy TEXT, 
+  agency_rules TEXT,  
+  location_lat DECIMAL, -- Ajout de la latitude
+  location_lng DECIMAL, -- Ajout de la longitude
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -36,8 +38,8 @@ CREATE TABLE IF NOT EXISTS reservations (
   last_name TEXT NOT NULL,
   phone TEXT NOT NULL,
   email TEXT NOT NULL,
-  delivery_type TEXT NOT NULL, -- 'pickup', 'delivery'
-  payment_type TEXT NOT NULL, -- 'pickup', 'online'
+  delivery_type TEXT NOT NULL,
+  payment_type TEXT NOT NULL,
   status TEXT DEFAULT 'pending',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { Car } from '../types';
-import { Star, MapPin, Users, Settings, Fuel, Calendar, Clock, ChevronRight, Award, ShieldCheck, Loader2, X, MessageSquare, ChevronLeft } from 'lucide-react';
+import { Star, MapPin, Users, Settings, Fuel, Calendar, Clock, ChevronRight, ShieldCheck, Loader2, X, MessageSquare, ChevronLeft, User, Award, Plus, Minus } from 'lucide-react';
 import { useLanguage } from '../App';
 import SearchBar from '../components/SearchBar';
 import { TIMES } from '../constants';
@@ -72,6 +72,19 @@ const CarDetailsPage: React.FC<CarDetailsPageProps> = ({ id }) => {
     return current > start && current < end;
   };
 
+  const getTimeOnPlatform = (createdAt?: string) => {
+    if (!createdAt) return "Moins d'un mois";
+    const created = new Date(createdAt);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - created.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffMonths = Math.floor(diffDays / 30);
+
+    if (diffMonths < 1) return "Moins d'un mois";
+    if (diffMonths === 1) return "1 mois";
+    return `${diffMonths} mois`;
+  };
+
   if (loading) return (
     <div className="pt-40 flex flex-col items-center justify-center gap-4">
       <Loader2 className="w-10 h-10 animate-spin text-[#2A4E2F]" />
@@ -92,45 +105,56 @@ const CarDetailsPage: React.FC<CarDetailsPageProps> = ({ id }) => {
     return `${months[date.month]} ${date.day}, ${date.year}`;
   };
 
+  // Coordinates from Database
+  const lat = car.location_lat || 33.5731;
+  const lng = car.location_lng || -7.6331;
+  
+  // Create an OpenStreetMap embed URL with precise marker position and color layer
+  const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.01}%2C${lat - 0.005}%2C${lng + 0.01}%2C${lat + 0.005}&layer=mapnik&marker=${lat}%2C${lng}`;
+
   return (
     <div className="bg-[#fcfcfc] min-h-screen">
       <div className="pt-32 pb-12 px-6"><SearchBar onSearch={() => {}} /></div>
       <div className="max-w-7xl mx-auto px-6 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           
-          <div className="lg:col-span-8 space-y-12">
-            <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm">
+          <div className="lg:col-span-8 space-y-6">
+            <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm mb-6">
               <div className="relative h-[400px] w-full flex items-center justify-center p-4">
                 <img src={car.image_url} alt={car.brand} className="max-w-full max-h-full object-contain" />
               </div>
               <div className="mt-8 text-center border-t border-gray-50 pt-8">
-                <h1 className="text-2xl md:text-3xl font-black text-gray-900 leading-tight uppercase">{car.brand} {car.model} {car.year} À {car.city}</h1>
+                <h1 className="text-2xl md:text-3xl font-black text-gray-900 leading-tight uppercase tracking-tight">{car.brand} {car.model} {car.year} À {car.city}</h1>
                 <div className="flex items-center justify-center gap-6 mt-6 font-bold text-gray-500 text-sm">
                   <div className="flex items-center gap-2"><Users className="w-5 h-5 text-gray-400" /><span>{car.seats} seats</span></div>
                   <div className="flex items-center gap-2"><Settings className="w-5 h-5 text-gray-400" /><span>{car.transmission}</span></div>
                   <div className="flex items-center gap-2"><Fuel className="w-5 h-5 text-gray-400" /><span>{car.fuel_type}</span></div>
                 </div>
                 <div className="mt-8 pt-8 border-t border-gray-50 text-left">
-                  <h3 className="text-lg font-black text-gray-900">Numéro d'agence-{car.id.slice(0, 10)}</h3>
+                  <h3 className="text-[17px] font-black text-gray-900 uppercase">Numéro d'agence-{car.id.slice(0, 10)}</h3>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-[2rem] border border-gray-100 p-8 flex items-center gap-8 shadow-sm">
-                <div className="flex items-center gap-4 shrink-0">
-                  <Award className="w-12 h-12 text-yellow-500" />
-                  <h3 className="text-xl font-black text-gray-900 leading-tight">{t.partnerFounder}</h3>
-                </div>
+            {/* Partenaire Fondateur Section */}
+            <div className="bg-white rounded-[2rem] border border-gray-100 p-8 flex items-center gap-10 shadow-sm">
+                <h3 className="text-[20px] font-black text-gray-900 whitespace-nowrap">{t.partnerFounder}</h3>
                 <div className="h-10 w-px bg-gray-100 hidden md:block"></div>
-                <p className="text-gray-500 font-bold text-sm">{t.partnerFounderDesc}</p>
+                <p className="text-gray-500 font-bold text-[15px] leading-relaxed">Fait partie des premiers partenaires de confiance de {t.brand}.</p>
             </div>
 
-            <div className="bg-white rounded-[2rem] border border-gray-100 p-8 flex items-center gap-4 shadow-sm">
-              <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center"><Users className="w-7 h-7 text-gray-400" /></div>
-              <div><h4 className="font-black text-gray-900 text-lg">Géré par {car.agency_name}</h4><p className="text-sm text-gray-400 font-bold">Moins d'un mois sur {t.brand}</p></div>
+            {/* Agency Manager Section */}
+            <div className="bg-white rounded-[2rem] border border-gray-100 p-8 flex items-center gap-5 shadow-sm">
+              <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 shadow-sm">
+                <User className="w-7 h-7 text-gray-300" />
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="font-black text-gray-900 text-[18px]">Géré par {car.agency_name}</h4>
+                <p className="text-sm text-gray-400 font-bold">{getTimeOnPlatform(car.created_at)} sur {t.brand}</p>
+              </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 pt-6">
               <h2 className="text-2xl font-black text-gray-900">{t.policies}</h2>
               <div className="w-10 h-1 bg-[#2A4E2F] rounded-full"></div>
               <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm space-y-8">
@@ -167,7 +191,7 @@ const CarDetailsPage: React.FC<CarDetailsPageProps> = ({ id }) => {
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 pt-6">
               <h2 className="text-2xl font-black text-gray-900">{t.reviews}</h2>
               <div className="w-10 h-1 bg-[#2A4E2F] rounded-full"></div>
               <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm">
@@ -185,14 +209,21 @@ const CarDetailsPage: React.FC<CarDetailsPageProps> = ({ id }) => {
             <div className="sticky top-24 space-y-8">
               <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl p-8 space-y-8 relative">
                 <div className="space-y-4">
-                  <div className="flex justify-between items-baseline gap-2">
-                    <span className="text-[36px] font-black text-gray-900 leading-none truncate">{car.price_per_day} MAD</span>
-                    <div className="text-right shrink-0">
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Dépôt</span>
-                      <span className="text-[13px] font-black text-gray-900 whitespace-nowrap">{car.deposit} MAD</span>
+                  <div className="flex justify-between items-end gap-2">
+                    <div className="flex-1 overflow-hidden">
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className="text-3xl font-black text-gray-900 leading-none">
+                          {car.price_per_day}
+                        </span>
+                        <span className="text-xl font-black text-gray-900 uppercase">MAD</span>
+                      </div>
+                      <span className="text-sm text-gray-400 font-bold block mt-1.5 uppercase tracking-wide">pour 1 jour</span>
+                    </div>
+                    <div className="text-right shrink-0 bg-gray-50/50 px-4 py-3 rounded-2xl border border-gray-100 shadow-sm">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Dépôt</span>
+                      <span className="text-[15px] font-black text-gray-900 whitespace-nowrap">{car.deposit} MAD</span>
                     </div>
                   </div>
-                  <span className="text-sm text-gray-400 font-bold block">pour 1 jour</span>
                 </div>
 
                 <div className="border border-gray-200 rounded-[1.5rem] overflow-hidden bg-white">
@@ -265,13 +296,42 @@ const CarDetailsPage: React.FC<CarDetailsPageProps> = ({ id }) => {
                 )}
               </div>
 
-              <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl p-8 space-y-6">
-                <h3 className="text-xl font-black text-gray-900 uppercase">{car.city} — ANFA</h3>
-                <div className="w-10 h-1 bg-[#2A4E2F] rounded-full"></div>
-                <div className="relative aspect-square rounded-[2rem] overflow-hidden bg-gray-50 border border-gray-100 group">
-                   <img src={`https://picsum.photos/seed/${car.id}/600/600`} alt="Location" className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 transition-all duration-700" />
-                   <div className="absolute inset-0 flex items-center justify-center"><div className="w-16 h-16 rounded-full border-4 border-[#2A4E2F] flex items-center justify-center bg-white/40 backdrop-blur-md shadow-2xl"><MapPin className="w-7 h-7 text-[#2A4E2F]" /></div></div>
-                   <div className="absolute bottom-4 right-4 bg-white/80 backdrop-blur-md px-4 py-2 rounded-xl text-[10px] font-black flex items-center gap-2 shadow-sm">Leaflet | © OSM © CARTO</div>
+              {/* Localisation Section - Colored Map and exact city name */}
+              <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl p-8 space-y-4">
+                <div className="space-y-2">
+                  <h3 className="text-[20px] font-black text-gray-900 lowercase">{car.city}</h3>
+                  <div className="w-8 h-1 bg-[#2A4E2F] rounded-full"></div>
+                </div>
+                
+                <div className="relative aspect-video rounded-[2rem] overflow-hidden bg-gray-100 border border-gray-100 shadow-inner group mt-4">
+                   {/* Colored Interactive OpenStreetMap Embed */}
+                   <iframe 
+                      title="Localisation exacte"
+                      width="100%" 
+                      height="100%" 
+                      frameBorder="0" 
+                      scrolling="no" 
+                      marginHeight={0} 
+                      marginWidth={0} 
+                      src={osmUrl}
+                      className="w-full h-full"
+                   ></iframe>
+                   
+                   {/* Zoom UI Elements */}
+                   <div className="absolute top-4 left-4 flex flex-col bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden pointer-events-none">
+                      <div className="p-2 border-b border-gray-100"><Plus className="w-5 h-5 text-gray-400" /></div>
+                      <div className="p-2"><Minus className="w-5 h-5 text-gray-400" /></div>
+                   </div>
+
+                   {/* Marker Overlay - The large area circle centered exactly on coordinates */}
+                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-48 h-48 rounded-full border-[6px] border-[#2A4E2F] bg-[#2A4E2F]/5 shadow-[0_0_30px_rgba(42,78,47,0.2)]"></div>
+                   </div>
+
+                   {/* Attribution Overlay */}
+                   <div className="absolute bottom-2 right-4 text-[9px] font-bold text-gray-400 bg-white/60 backdrop-blur-sm px-2 py-0.5 rounded flex items-center gap-1 pointer-events-none">
+                      <span className="text-blue-500">🇺🇦</span> Leaflet | © OSM © CARTO
+                   </div>
                 </div>
               </div>
             </div>
