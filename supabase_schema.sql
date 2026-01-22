@@ -1,6 +1,16 @@
 
+-- TABLE: profiles
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  first_name TEXT,
+  last_name TEXT,
+  phone TEXT,
+  avatar_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- TABLE: cars
-CREATE TABLE IF NOT EXISTS cars (
+CREATE TABLE IF NOT EXISTS public.cars (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   brand TEXT NOT NULL,
   model TEXT NOT NULL,
@@ -19,13 +29,13 @@ CREATE TABLE IF NOT EXISTS cars (
   is_verified_partner BOOLEAN DEFAULT true,
   cancel_policy TEXT, 
   agency_rules TEXT,  
-  location_lat DECIMAL, -- Ajout de la latitude
-  location_lng DECIMAL, -- Ajout de la longitude
+  location_lat DECIMAL,
+  location_lng DECIMAL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- TABLE: reservations
-CREATE TABLE IF NOT EXISTS reservations (
+CREATE TABLE IF NOT EXISTS public.reservations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   car_id UUID REFERENCES cars(id),
   user_id UUID REFERENCES auth.users(id),
@@ -44,6 +54,31 @@ CREATE TABLE IF NOT EXISTS reservations (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- RLS POLICIES
-ALTER TABLE cars ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public read access for cars" ON cars FOR SELECT USING (true);
+-- RLS & Policies
+ALTER TABLE public.cars ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read access for cars" ON public.cars FOR SELECT USING (true);
+
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Users can update their own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+
+ALTER TABLE public.reservations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own reservations" ON public.reservations FOR SELECT USING (auth.uid() = user_id);
+
+-- TRIGGER: Automatic Profile Creation
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, first_name, last_name)
+  VALUES (
+    new.id, 
+    new.raw_user_meta_data->>'first_name', 
+    new.raw_user_meta_data->>'last_name'
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();

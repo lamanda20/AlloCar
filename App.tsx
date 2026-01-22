@@ -6,7 +6,9 @@ import HomePage from './pages/HomePage';
 import CarDetailsPage from './pages/CarDetailsPage';
 import CheckoutPage from './pages/CheckoutPage';
 import PartnerPage from './pages/PartnerPage';
+import MyBookingsPage from './pages/MyBookingsPage';
 import { translations } from './translations';
+import { supabase } from './lib/supabase';
 
 type Language = 'fr' | 'en';
 
@@ -14,6 +16,8 @@ interface LanguageContextType {
   lang: Language;
   setLang: (lang: Language) => void;
   t: any;
+  user: any;
+  setUser: (user: any) => void;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -27,11 +31,25 @@ export const useLanguage = () => {
 const App: React.FC = () => {
   const [route, setRoute] = useState(window.location.hash || '#/');
   const [lang, setLang] = useState<Language>('fr');
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
+    // Session initiale
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Écouter les changements d'auth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
     const handleHashChange = () => setRoute(window.location.hash || '#/');
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const t = translations[lang];
@@ -47,12 +65,13 @@ const App: React.FC = () => {
       return <CheckoutPage id={id} />;
     }
     if (route === '#/partner') return <PartnerPage />;
+    if (route === '#/my-bookings') return <MyBookingsPage />;
     
     return <HomePage />;
   };
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t }}>
+    <LanguageContext.Provider value={{ lang, setLang, t, user, setUser }}>
       <div className="min-h-screen flex flex-col bg-[#fcfcfc] selection:bg-[#2A4E2F] selection:text-white">
         <Navbar />
         <main className="flex-grow">
