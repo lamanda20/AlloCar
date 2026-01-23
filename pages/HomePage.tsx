@@ -164,7 +164,7 @@ const HomePage: React.FC = () => {
             </div>
           </div>
         ) : (
-          Object.entries(groupedByCity).map(([city, cityCars]) => (
+          (Object.entries(groupedByCity) as [string, Car[]][]).map(([city, cityCars]) => (
             <div key={city} className="space-y-8">
               <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                 <h2 className="text-[22px] font-black text-gray-900 flex items-center gap-2 group cursor-pointer">
