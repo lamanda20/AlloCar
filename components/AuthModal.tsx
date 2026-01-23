@@ -28,7 +28,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialView }) =
     marketing: true
   });
 
-  // Synchroniser la vue interne quand le modal est ouvert depuis l'extérieur
   useEffect(() => {
     if (isOpen) {
       setModalView(initialView);
@@ -47,6 +46,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialView }) =
       const { error: googleError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
+          redirectTo: window.location.origin,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
@@ -56,7 +56,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialView }) =
       if (googleError) throw googleError;
     } catch (err: any) {
       console.error("OAuth Error:", err);
-      setError("Accès refusé. Avez-vous ajouté votre email dans 'Utilisateurs de test' sur Google Cloud ?");
+      setError("Erreur Google Login.");
       setLoading(false);
     }
   };
@@ -74,14 +74,23 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialView }) =
           options: {
             data: {
               first_name: formData.name,
-              last_name: '', 
+              full_name: formData.name
             }
           }
         });
+        
         if (signupError) throw signupError;
+        
         if (data.user) {
-            setUser(data.user);
-            onClose();
+          // Création manuelle immédiate du profil (double sécurité)
+          await supabase.from('profiles').upsert({
+            id: data.user.id,
+            first_name: formData.name,
+            last_name: ''
+          });
+          
+          setUser(data.user);
+          onClose();
         }
       } else {
         const { data, error: loginError } = await supabase.auth.signInWithPassword({
@@ -142,19 +151,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialView }) =
               <div className="bg-red-50 p-6 rounded-2xl border border-red-100 flex flex-col gap-3 text-red-600 animate-in slide-in-from-top-2">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                  <span className="text-[13px] font-black uppercase tracking-tight">Erreur d'accès</span>
+                  <span className="text-[13px] font-black uppercase tracking-tight">Erreur</span>
                 </div>
-                <p className="text-[14px] font-bold leading-relaxed">{error}</p>
-                {error.includes("Utilisateurs de test") && (
-                  <div className="mt-2 p-4 bg-white/50 rounded-xl border border-red-100 space-y-2">
-                    <p className="text-[11px] font-black uppercase text-red-400">Comment corriger :</p>
-                    <ol className="text-[12px] font-bold space-y-1 list-decimal ml-4">
-                      <li>AlloCar Dashboard Google Cloud</li>
-                      <li>Onglet 'Audience'</li>
-                      <li>Ajouter votre email dans 'Utilisateurs de test'</li>
-                    </ol>
-                  </div>
-                )}
+                <p className="text-[14px] font-bold">{error}</p>
               </div>
             )}
 

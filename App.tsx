@@ -33,51 +33,45 @@ const App: React.FC = () => {
   const [lang, setLang] = useState<Language>('fr');
   const [user, setUser] = useState<any>(null);
 
-  // Fonction pour synchroniser le profil utilisateur avec la base de données
+  // Synchronisation avec logs détaillés
   const syncUserProfile = async (authUser: any) => {
     if (!authUser) return;
 
+    const meta = authUser.user_metadata || {};
+    const fullName = meta.full_name || meta.name || "";
+    const firstName = meta.first_name || meta.given_name || fullName.split(' ')[0] || "Client";
+    const lastName = meta.last_name || meta.family_name || (fullName.includes(' ') ? fullName.split(' ').slice(1).join(' ') : "");
+    const avatarUrl = meta.avatar_url || meta.picture;
+
+    console.log("Tentative de synchronisation profil pour:", authUser.email);
+
     try {
-      // Vérifier si le profil existe déjà
-      const { data: existingProfile } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('id')
-        .eq('id', authUser.id)
-        .single();
+        .upsert({
+          id: authUser.id,
+          first_name: firstName,
+          last_name: lastName,
+          avatar_url: avatarUrl
+        }, { onConflict: 'id' });
 
-      if (!existingProfile) {
-        // Extraire les données des métadonnées Google/Auth
-        const meta = authUser.user_metadata || {};
-        const fullName = meta.full_name || meta.name || "";
-        const firstName = meta.first_name || meta.given_name || fullName.split(' ')[0] || "Utilisateur";
-        const lastName = meta.last_name || meta.family_name || (fullName.includes(' ') ? fullName.split(' ').slice(1).join(' ') : "");
-        const avatarUrl = meta.avatar_url || meta.picture;
-
-        // Créer le profil
-        await supabase.from('profiles').insert([
-          {
-            id: authUser.id,
-            first_name: firstName,
-            last_name: lastName,
-            avatar_url: avatarUrl
-          }
-        ]);
-        console.log("Profil utilisateur synchronisé avec succès.");
+      if (error) {
+        console.error("❌ ERREUR SUPABASE PROFILES:", error.message, error.details, error.hint);
+      } else {
+        console.log("✅ PROFIL SYNCHRONISÉ DANS LA TABLE 'profiles'");
       }
     } catch (err) {
-      console.error("Erreur lors de la synchronisation du profil:", err);
+      console.error("❌ ERREUR CRITIQUE SYNC:", err);
     }
   };
 
   useEffect(() => {
-    // Session initiale
     supabase.auth.getSession().then(({ data: { session } }) => {
       const authUser = session?.user ?? null;
       setUser(authUser);
       if (authUser) syncUserProfile(authUser);
     });
 
-    // Écouter les changements d'auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const authUser = session?.user ?? null;
       setUser(authUser);
