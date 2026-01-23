@@ -17,7 +17,6 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ id }) => {
   const [paymentType, setPaymentType] = useState<'pickup' | 'online'>('pickup');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   
-  // Récupérer les paramètres depuis l'URL
   const getParams = () => new URLSearchParams(window.location.hash.split('?')[1] || '');
   const params = getParams();
   
@@ -63,11 +62,16 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ id }) => {
 
   useEffect(() => {
     if (user) {
+      const meta = user.user_metadata || {};
+      const fullName = meta.full_name || meta.name || "";
+      const fName = meta.first_name || meta.given_name || (fullName.split(' ')[0]) || "";
+      const lName = meta.last_name || meta.family_name || (fullName.includes(' ') ? fullName.split(' ').slice(1).join(' ') : "") || "";
+
       setFormData(prev => ({
         ...prev,
         email: user.email || '',
-        firstName: user.user_metadata?.first_name || '',
-        lastName: user.user_metadata?.last_name || '',
+        firstName: prev.firstName || fName,
+        lastName: prev.lastName || lName,
       }));
     }
   }, [user]);
@@ -99,10 +103,26 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ id }) => {
       setIsAuthModalOpen(true);
       return;
     }
-    if (!formData.firstName || !formData.lastName || !formData.phone || !formData.termsAccepted) {
-      setError("Veuillez remplir les champs obligatoires et accepter les conditions.");
+
+    // DEBUG LOGS pour voir ce qui manque précisément
+    console.log("Validation en cours...", {
+      firstName: !!formData.firstName,
+      lastName: !!formData.lastName,
+      phone: !!formData.phone,
+      terms: formData.termsAccepted
+    });
+
+    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.phone.trim() || !formData.termsAccepted) {
+      let missing = [];
+      if (!formData.firstName.trim()) missing.push("Prénom");
+      if (!formData.lastName.trim()) missing.push("Nom");
+      if (!formData.phone.trim()) missing.push("Téléphone");
+      if (!formData.termsAccepted) missing.push("Conditions");
+      
+      setError(`Veuillez remplir : ${missing.join(', ')}`);
       return;
     }
+
     setIsSubmitting(true);
     setError(null);
 
@@ -117,9 +137,9 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ id }) => {
           start_time: bookingParams.startTime,
           end_time: bookingParams.endTime,
           total_price: totalLocation,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          phone: formData.phone,
+          first_name: formData.firstName.trim(),
+          last_name: formData.lastName.trim(),
+          phone: formData.phone.trim(),
           email: formData.email,
           delivery_type: 'pickup',
           payment_type: paymentType,
@@ -215,15 +235,15 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ id }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <label className="text-[13px] font-black text-gray-900">Prénom <span className="text-red-500">*</span></label>
-                        <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="Ex: Ahmed" className="w-full border border-gray-200 rounded-xl px-5 py-4 text-sm font-bold" />
+                        <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="Ex: Ahmed" className="w-full border border-gray-200 rounded-xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-[#2A4E2F]/10 outline-none" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-[13px] font-black text-gray-900">Nom <span className="text-red-500">*</span></label>
-                        <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Ex: El Amrani" className="w-full border border-gray-200 rounded-xl px-5 py-4 text-sm font-bold" />
+                        <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Ex: El Amrani" className="w-full border border-gray-200 rounded-xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-[#2A4E2F]/10 outline-none" />
                     </div>
                     <div className="md:col-span-1 space-y-2">
                         <label className="text-[13px] font-black text-gray-900">Téléphone <span className="text-red-500">*</span></label>
-                        <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+212 6..." className="w-full border border-gray-200 rounded-xl px-5 py-4 text-sm font-bold" />
+                        <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+212 6..." className="w-full border border-gray-200 rounded-xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-[#2A4E2F]/10 outline-none" />
                     </div>
                     <div className="md:col-span-1 space-y-2">
                         <label className="text-[13px] font-black text-gray-900">Email</label>
@@ -232,10 +252,23 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ id }) => {
                 </div>
                 <div className="pt-4">
                     <label className="flex items-center gap-4 cursor-pointer group">
-                        <div onClick={() => setFormData(f => ({...f, termsAccepted: !f.termsAccepted}))}>
-                            {formData.termsAccepted ? <CheckSquare className="w-7 h-7 fill-[#2A4E2F] text-white" /> : <div className="w-7 h-7 border-2 border-gray-100 rounded-lg group-hover:border-gray-300" />}
+                        <div className="relative">
+                            <input 
+                              type="checkbox" 
+                              name="termsAccepted"
+                              checked={formData.termsAccepted}
+                              onChange={handleInputChange}
+                              className="sr-only" 
+                            />
+                            {formData.termsAccepted ? (
+                              <CheckSquare className="w-7 h-7 fill-[#2A4E2F] text-white" />
+                            ) : (
+                              <div className="w-7 h-7 border-2 border-gray-200 rounded-lg group-hover:border-[#2A4E2F] transition-colors" />
+                            )}
                         </div>
-                        <span className="text-[13px] font-bold text-gray-500">J'accepte les Conditions Générales de Location.</span>
+                        <span className="text-[14px] font-bold text-gray-600 group-hover:text-gray-900 transition-colors">
+                          J'accepte les Conditions Générales de Location. <span className="text-red-500">*</span>
+                        </span>
                     </label>
                 </div>
             </section>
@@ -265,8 +298,8 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ id }) => {
                     {isSubmitting ? <Loader2 className="w-7 h-7 animate-spin" /> : 'Confirmer ma Réservation'}
                 </button>
                 {error && (
-                    <div className="flex items-center gap-2 justify-center text-red-500 font-bold text-sm">
-                        <AlertCircle className="w-4 h-4" />
+                    <div className="flex items-center gap-2 justify-center bg-red-50 p-4 rounded-xl text-red-600 font-bold text-sm animate-in fade-in slide-in-from-top-2">
+                        <AlertCircle className="w-5 h-5" />
                         <span>{error}</span>
                     </div>
                 )}
