@@ -33,7 +33,7 @@ const App: React.FC = () => {
   const [lang, setLang] = useState<Language>('fr');
   const [user, setUser] = useState<any>(null);
 
-  // Synchronisation avec logs détaillés
+  // Synchronisation forcée du profil avec logs de debug
   const syncUserProfile = async (authUser: any) => {
     if (!authUser) return;
 
@@ -43,10 +43,8 @@ const App: React.FC = () => {
     const lastName = meta.last_name || meta.family_name || (fullName.includes(' ') ? fullName.split(' ').slice(1).join(' ') : "");
     const avatarUrl = meta.avatar_url || meta.picture;
 
-    console.log("Tentative de synchronisation profil pour:", authUser.email);
-
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .upsert({
           id: authUser.id,
@@ -56,22 +54,24 @@ const App: React.FC = () => {
         }, { onConflict: 'id' });
 
       if (error) {
-        console.error("❌ ERREUR SUPABASE PROFILES:", error.message, error.details, error.hint);
+        console.error("❌ Erreur enregistrement profil:", error.message);
       } else {
-        console.log("✅ PROFIL SYNCHRONISÉ DANS LA TABLE 'profiles'");
+        console.log("✅ Profil utilisateur synchronisé avec succès.");
       }
     } catch (err) {
-      console.error("❌ ERREUR CRITIQUE SYNC:", err);
+      console.error("❌ Erreur critique sync:", err);
     }
   };
 
   useEffect(() => {
+    // Session initiale
     supabase.auth.getSession().then(({ data: { session } }) => {
       const authUser = session?.user ?? null;
       setUser(authUser);
       if (authUser) syncUserProfile(authUser);
     });
 
+    // Écouteur de session
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const authUser = session?.user ?? null;
       setUser(authUser);
@@ -88,18 +88,26 @@ const App: React.FC = () => {
 
   const t = translations[lang];
 
+  // LOGIQUE DE ROUTAGE CORRIGÉE (Extraction propre de l'ID)
   const renderRoute = () => {
-    if (route === '#/' || route === '') return <HomePage />;
-    if (route.startsWith('#/car/')) {
-      const id = route.split('#/car/')[1];
+    // On sépare le chemin (path) des paramètres (query string)
+    // Exemple: #/checkout/123?start=2025 -> path = #/checkout/123
+    const [path] = route.split('?');
+
+    if (path === '#/' || path === '') return <HomePage />;
+    
+    if (path.startsWith('#/car/')) {
+      const id = path.split('#/car/')[1];
       return <CarDetailsPage id={id} />;
     }
-    if (route.startsWith('#/checkout/')) {
-      const id = route.split('#/checkout/')[1];
+    
+    if (path.startsWith('#/checkout/')) {
+      const id = path.split('#/checkout/')[1];
       return <CheckoutPage id={id} />;
     }
-    if (route === '#/partner') return <PartnerPage />;
-    if (route === '#/my-bookings') return <MyBookingsPage />;
+
+    if (path === '#/partner') return <PartnerPage />;
+    if (path === '#/my-bookings') return <MyBookingsPage />;
     
     return <HomePage />;
   };
