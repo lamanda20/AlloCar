@@ -1,4 +1,7 @@
 
+-- Activer l'extension pour les UUID si nécessaire
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- TABLE: profiles
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -61,24 +64,33 @@ CREATE POLICY "Public read access for cars" ON public.cars FOR SELECT USING (tru
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Users can update their own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+-- CRITIQUE : Autoriser l'insertion pour le fallback frontend
+CREATE POLICY "Users can insert their own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
 ALTER TABLE public.reservations ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their own reservations" ON public.reservations FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own reservations" ON public.reservations FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- TRIGGER: Automatic Profile Creation
+-- TRIGGER: Automatic Profile Creation (Garde-fou serveur)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  full_name_val TEXT;
 BEGIN
-  INSERT INTO public.profiles (id, first_name, last_name)
+  full_name_val := COALESCE(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name');
+  INSERT INTO public.profiles (id, first_name, last_name, avatar_url)
   VALUES (
     new.id, 
-    new.raw_user_meta_data->>'first_name', 
-    new.raw_user_meta_data->>'last_name'
-  );
+    COALESCE(new.raw_user_meta_data->>'first_name', new.raw_user_meta_data->>'given_name', split_part(full_name_val, ' ', 1)), 
+    COALESCE(new.raw_user_meta_data->>'last_name', new.raw_user_meta_data->>'family_name', ''),
+    new.raw_user_meta_data->>'avatar_url'
+  )
+  ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE TRIGGER on_auth_user_created
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
